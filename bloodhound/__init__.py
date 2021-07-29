@@ -41,7 +41,7 @@ class BloodHound(object):
         self.sessions = []
 
 
-    def connect(self):
+    def connect(self, doKerberos=False):
         if len(self.ad.dcs()) == 0:
             logging.error('Could not find a domain controller. Consider specifying a domain and/or DNS server.')
             sys.exit(1)
@@ -60,7 +60,7 @@ class BloodHound(object):
             logging.debug('Using kerberos realm: %s', self.ad.realm())
 
         # Create a domain controller object
-        self.pdc = ADDC(pdc, self.ad)
+        self.pdc = ADDC(pdc, self.ad, kerb=doKerberos)
         # Create an object resolver
         self.ad.create_objectresolver(self.pdc)
 #        self.pdc.ldap_connect(self.ad.auth.username, self.ad.auth.password, kdc)
@@ -98,14 +98,14 @@ def kerberize():
     # If the kerberos credential cache is known, use that.
     krb5cc = os.getenv('KRB5CCNAME')
 
-    # Otherwise, guess it.
-    if krb5cc is None:
-        krb5cc = '/tmp/krb5cc_%u' % os.getuid()
+    # # Otherwise, guess it.
+    # if krb5cc is None:
+    #     krb5cc = '/tmp/krb5cc_%u' % os.getuid()
 
     if os.path.isfile(krb5cc):
         logging.debug('Using kerberos credential cache: %s', krb5cc)
-        if os.getenv('KRB5CCNAME') is None:
-            os.environ['KRB5CCNAME'] = krb5cc
+        # if os.getenv('KRB5CCNAME') is None:
+        #     os.environ['KRB5CCNAME'] = krb5cc
     else:
         logging.error('Could not find kerberos credential cache file')
         sys.exit(1)
@@ -244,9 +244,8 @@ def main():
         logger.setLevel(logging.DEBUG)
 
     if args.kerberos is True:
-        logging.debug('Authentication: kerberos')
-        kerberize()
-        auth = ADAuthentication()
+        logging.debug('Authentication: Kerberos ccache')
+        auth = ADAuthentication(username=args.username, password=args.password, domain=args.domain)
     elif args.username is not None and args.password is not None:
         logging.debug('Authentication: username/password')
         auth = ADAuthentication(username=args.username, password=args.password, domain=args.domain)
@@ -291,9 +290,14 @@ def main():
             sys.exit(1)
         ad.override_gc(args.global_catalog)
     # For adding timestamp prefix to the outputfiles 
+    if args.kerberos is True:
+        # kerberize()
+        if not auth.load_ccache():
+            logging.debug('Could not load ticket from ccache, trying to request a TGT instead')
+            auth.get_tgt()
     timestamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S') + "_"
     bloodhound = BloodHound(ad)
-    bloodhound.connect()
+    bloodhound.connect(doKerberos=args.kerberos)
     bloodhound.run(collect=collect,
                    num_workers=args.workers,
                    disable_pooling=args.disable_pooling,

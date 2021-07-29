@@ -41,7 +41,7 @@ from future.utils import itervalues, iteritems, native_str
 Active Directory Domain Controller
 """
 class ADDC(ADComputer):
-    def __init__(self, hostname=None, ad=None):
+    def __init__(self, hostname=None, ad=None, kerb=False):
         ADComputer.__init__(self, hostname)
         self.ad = ad
         # Primary LDAP connection
@@ -52,6 +52,8 @@ class ADDC(ADComputer):
         self.gcldap = None
         # Initialize GUID map
         self.objecttype_guid_map = dict()
+        # force kerberose necessities
+        self.kerb = kerb
 
     def ldap_connect(self, protocol='ldap', resolver=False):
         """
@@ -65,7 +67,12 @@ class ADDC(ADComputer):
         for r in q:
             ip = r.address
 
-        ldap = self.ad.auth.getLDAPConnection(hostname=ip,
+        if self.kerb:
+            # need to pass DC's domain name to resolve kerberos properly
+            ldap = self.ad.auth.getLDAPConnection(hostname=self.hostname,
+                                              baseDN=self.ad.baseDN, protocol=protocol)
+        else:
+            ldap = self.ad.auth.getLDAPConnection(hostname=ip,
                                               baseDN=self.ad.baseDN, protocol=protocol)
         if resolver:
             self.resolverldap = ldap
@@ -532,9 +539,11 @@ class AD(object):
                 else:
                     logging.warning('Could not find a global catalog server. Please specify one with -gc')
 
-        if kerberos is True:
+        if kerberos:
             try:
-                q = self.dnsresolver.query('_kerberos._tcp.dc._msdcs', 'SRV', tcp=self.dns_tcp)
+                kquery = query.replace('pdc','dc').replace('_ldap','_kerberos')
+                q = self.dnsresolver.query(kquery, 'SRV', tcp=self.dns_tcp)
+                # TODO: Get the additional records here to get the DC ip immediately
                 for r in q:
                     kdc = str(r.target).rstrip('.')
                     logging.debug('Found KDC: %s' % str(r.target).rstrip('.'))

@@ -202,6 +202,16 @@ class ADComputer(object):
         try:
             self.rpc = transport.DCERPCTransportFactory(binding)
             self.rpc.set_connect_timeout(1.0)
+            if hasattr(self.rpc, 'set_kerberos') and self.ad.auth.tgt:
+                self.rpc.set_kerberos(True, self.ad.auth.kdc)
+                if hasattr(self.rpc, 'set_credentials'):
+                    self.rpc.set_credentials(self.ad.auth.username, self.ad.auth.password,
+                                             domain=self.ad.auth.domain,
+                                             lmhash=self.ad.auth.lm_hash,
+                                             nthash=self.ad.auth.nt_hash,
+                                             aesKey=self.ad.auth.aeskey,
+                                             TGT=self.ad.auth.tgt)
+
             if hasattr(self.rpc, 'set_credentials'):
                 self.rpc.set_credentials(self.ad.auth.username, self.ad.auth.password,
                                          domain=self.ad.auth.domain,
