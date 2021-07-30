@@ -43,7 +43,7 @@ Active Directory authentication helper
 """
 class ADAuthentication(object):
     def __init__(self, username='', password='', domain='',
-                 lm_hash='', nt_hash='', aes_key='', kdc=None):
+                 lm_hash='', nt_hash='', aes_key='', kdc=None, k_uname=''):
         self.username = username
         self.domain = domain
         if '@' in self.username:
@@ -53,6 +53,13 @@ class ADAuthentication(object):
         self.nt_hash = nt_hash
         self.aes_key = aes_key
         self.kdc = kdc
+        self.k_domain = ''
+        if k_uname:
+            self.k_uname = k_uname
+        else:
+            self.k_uname = username
+        if '@' in self.k_uname:
+            self.k_uname, self.k_domain = self.k_uname.rsplit('@', 1)
 
 
     def getLDAPConnection(self, hostname='', baseDN='', protocol='ldaps', gc=False):
@@ -71,7 +78,10 @@ class ADAuthentication(object):
             ldappass = self.lm_hash + ':' + self.nt_hash
         else:
             ldappass = self.password
-        ldaplogin = '%s\\%s' % (self.domain, self.username)
+        if self.k_domain:
+            ldaplogin = '%s\\%s' % (self.k_domain, self.k_uname)
+        else:
+            ldaplogin = '%s\\%s' % (self.domain, self.username)
         conn = Connection(server, user=ldaplogin, auto_referrals=False, password=ldappass, authentication=NTLM, receive_timeout=60, auto_range=True)
 
         # TODO: Kerberos auth for ldap
