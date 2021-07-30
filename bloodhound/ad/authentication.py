@@ -52,7 +52,10 @@ class ADAuthentication(object):
         self.lm_hash = lm_hash
         self.nt_hash = nt_hash
         self.aes_key = aes_key
-        self.kdc = kdc
+        if kdc:
+            self.kdc = kdc
+        else:
+            self.kdc = self.domain
         self.k_domain = ''
         self.k_server_override = k_server_override
         if k_uname:
