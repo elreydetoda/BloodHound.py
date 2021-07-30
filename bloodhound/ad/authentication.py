@@ -186,7 +186,7 @@ class ADAuthentication(object):
         TGT['sessionKey'] = session_key
         self.tgt = TGT
     
-    def load_ccache(self):
+    def load_ccache(self, kerb_domain_override = None):
         """
         Extract a TGT from a ccache file.
         """
@@ -206,7 +206,10 @@ class ADAuthentication(object):
         # Load TGT for our domain
         ccache = CCache.loadFile(krb5cc)
         # print(self.__dict__.items())
-        principal = 'krbtgt/%s@%s' % (self.domain.upper(), self.domain.upper())
+        if kerb_domain_override:
+            principal = 'krbtgt/%s@%s' % (kerb_domain_override.upper(), self.domain.upper())
+        else:
+            principal = 'krbtgt/%s@%s' % (self.domain.upper(), self.domain.upper())
         # ccache.getCredential('krbtgt/{}@{}'.format('testing.pvt'.upper(),'testing.pvt'.upper()))
         creds = ccache.getCredential(principal, anySPN=False)
         if creds is not None:

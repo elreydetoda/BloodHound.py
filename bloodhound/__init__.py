@@ -186,6 +186,10 @@ def main():
                         '--kerberos-username',
                         action='store',
                         help='Username. Format: username[@domain]; If the domain is unspecified, the current domain is used.')
+    parser.add_argument('-k-s-d',
+                        '--kerberos-server-domain',
+                        action='store',
+                        help='Username. Format: username[@domain]; If the domain is unspecified, the current domain is used.')
     parser.add_argument('-p',
                         '--password',
                         action='store',
