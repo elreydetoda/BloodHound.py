@@ -235,6 +235,7 @@ class ADDC(ADComputer):
                                                          attributes=['name', 'schemaidguid'])
         except Exception as e:
             print(e)
+            return None
         for res in sresult:
             if res['attributes']['schemaIDGUID']:
                 guid = str(UUID(bytes_le=res['attributes']['schemaIDGUID']))

@@ -5,3 +5,5 @@ dist/
 *.csv
 *.json
 *.zip
+.vagrant/
+impacket-master/
