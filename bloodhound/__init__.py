@@ -253,7 +253,7 @@ def main():
 
     if args.kerberos is True:
         logging.debug('Authentication: Kerberos ccache')
-        auth = ADAuthentication(username=args.username, password=args.password, domain=args.domain)
+        auth = ADAuthentication(username=args.username, password=args.password, domain=args.domain, k_server_override=args.kerberos_server_domain)
     elif args.username is not None and args.password is not None:
         logging.debug('Authentication: username/password')
         auth = ADAuthentication(username=args.username, password=args.password, domain=args.domain)

@@ -43,7 +43,7 @@ Active Directory authentication helper
 """
 class ADAuthentication(object):
     def __init__(self, username='', password='', domain='',
-                 lm_hash='', nt_hash='', aes_key='', kdc=None, k_uname=''):
+                 lm_hash='', nt_hash='', aes_key='', kdc=None, k_uname='', k_server_override=None):
         self.username = username
         self.domain = domain
         if '@' in self.username:
@@ -54,6 +54,7 @@ class ADAuthentication(object):
         self.aes_key = aes_key
         self.kdc = kdc
         self.k_domain = ''
+        self.k_server_override = k_server_override
         if k_uname:
             self.k_uname = k_uname
         else:
@@ -113,7 +114,11 @@ class ADAuthentication(object):
         kdc_rep = self.tgt['KDC_REP']
         kdc_cipher = self.tgt['cipher']
         kdc_session = self.tgt['sessionKey']
-        tgs, cipher, oldSessionKey, sessionkey = getKerberosTGS(servername, self.domain, self.kdc,
+        if self.k_server_override:
+            tgs, cipher, oldSessionKey, sessionkey = getKerberosTGS(servername, self.k_server_override, self.kdc,
+                                                                kdc_rep, kdc_cipher, kdc_session)
+        else:
+            tgs, cipher, oldSessionKey, sessionkey = getKerberosTGS(servername, self.domain, self.kdc,
                                                                 kdc_rep, kdc_cipher, kdc_session)
     
         # Let's build a NegTokenInit with a Kerberos AP_REQ
@@ -186,7 +191,7 @@ class ADAuthentication(object):
         TGT['sessionKey'] = session_key
         self.tgt = TGT
     
-    def load_ccache(self, kerb_domain_override = None):
+    def load_ccache(self):
         """
         Extract a TGT from a ccache file.
         """
@@ -206,8 +211,8 @@ class ADAuthentication(object):
         # Load TGT for our domain
         ccache = CCache.loadFile(krb5cc)
         # print(self.__dict__.items())
-        if kerb_domain_override:
-            principal = 'krbtgt/%s@%s' % (kerb_domain_override.upper(), self.domain.upper())
+        if self.k_server_override:
+            principal = 'krbtgt/%s@%s' % (self.k_server_override.upper(), self.domain.upper())
         else:
             principal = 'krbtgt/%s@%s' % (self.domain.upper(), self.domain.upper())
         # ccache.getCredential('krbtgt/{}@{}'.format('testing.pvt'.upper(),'testing.pvt'.upper()))
