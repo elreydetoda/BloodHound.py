@@ -233,10 +233,8 @@ class ADDC(ADComputer):
             sresult = self.ldap.extend.standard.paged_search(self.ldap.server.info.other['schemaNamingContext'][0],
                                                          '(objectClass=*)',
                                                          attributes=['name', 'schemaidguid'])
-        except LDAPNoSuchObjectResult:
-            # This may indicate the object doesn't exist or access is denied
-            logging.warning('LDAP Server reported that the object %s does not exist.', qobject)
-            return None
+        except Exception as e:
+            print(e)
         for res in sresult:
             if res['attributes']['schemaIDGUID']:
                 guid = str(UUID(bytes_le=res['attributes']['schemaIDGUID']))
