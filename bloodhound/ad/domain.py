@@ -22,6 +22,7 @@
 #
 ####################
 from __future__ import unicode_literals
+from binascii import Error
 import logging
 import traceback
 
@@ -229,9 +230,12 @@ class ADDC(ADComputer):
         if self.ldap is None:
             self.ldap_connect()
 
-        sresult = self.ldap.extend.standard.paged_search(self.ldap.server.info.other['schemaNamingContext'][0],
+        try:
+            sresult = self.ldap.extend.standard.paged_search(self.ldap.server.info.other['schemaNamingContext'][0],
                                                          '(objectClass=*)',
                                                          attributes=['name', 'schemaidguid'])
+        except Error as e:
+            print(e)
         for res in sresult:
             if res['attributes']['schemaIDGUID']:
                 guid = str(UUID(bytes_le=res['attributes']['schemaIDGUID']))
