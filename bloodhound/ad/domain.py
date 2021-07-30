@@ -22,7 +22,6 @@
 #
 ####################
 from __future__ import unicode_literals
-from binascii import Error
 import logging
 import traceback
 
@@ -234,8 +233,10 @@ class ADDC(ADComputer):
             sresult = self.ldap.extend.standard.paged_search(self.ldap.server.info.other['schemaNamingContext'][0],
                                                          '(objectClass=*)',
                                                          attributes=['name', 'schemaidguid'])
-        except Error as e:
-            print(e)
+        except LDAPNoSuchObjectResult:
+            # This may indicate the object doesn't exist or access is denied
+            logging.warning('LDAP Server reported that the object %s does not exist.', qobject)
+            return None
         for res in sresult:
             if res['attributes']['schemaIDGUID']:
                 guid = str(UUID(bytes_le=res['attributes']['schemaIDGUID']))
