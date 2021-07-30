@@ -209,7 +209,7 @@ class ADComputer(object):
                                              domain=self.ad.auth.domain,
                                              lmhash=self.ad.auth.lm_hash,
                                              nthash=self.ad.auth.nt_hash,
-                                             aesKey=self.ad.auth.aeskey,
+                                             aesKey=self.ad.auth.aes_key,
                                              TGT=self.ad.auth.tgt)
 
             if hasattr(self.rpc, 'set_credentials'):

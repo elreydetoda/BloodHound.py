@@ -168,7 +168,7 @@ class ADAuthentication(object):
         logging.info('Getting TGT for user')
         tgt, cipher, _, session_key = getKerberosTGT(username, self.password, self.domain,
                                                      unhexlify(self.lm_hash), unhexlify(self.nt_hash),
-                                                     self.aeskey,
+                                                     self.aes_key,
                                                      self.kdc)
         TGT = dict()
         TGT['KDC_REP'] = tgt
